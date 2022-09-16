@@ -44,7 +44,7 @@ class Twitter:
                                                - SERVER_NAME
                                                - DATABASE_NAME
                                                - DRIVER_NAME
-                                               
+
             proxy (bool, optional): check if proxies need to be set. Defaults to False.
         """        
 
@@ -143,7 +143,7 @@ class Authenticator:
             load_dotenv(env_file)
 
     def authenticate(self, env_file:str=None) -> OAuthHandler:
-
+        print(os.getenv('TWITTER_API_KEY'))
         self.load(env_file=env_file)
         auth = OAuthHandler(os.getenv('TWITTER_API_KEY'), os.getenv('TWITTER_API_KEY_SECRET'))
         auth.set_access_token(os.getenv('TWITTER_ACCESS_TOKEN'), os.getenv('TWITTER_ACCESS_TOKEN_SECRET'))
