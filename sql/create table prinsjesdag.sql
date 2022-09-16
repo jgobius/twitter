@@ -16,3 +16,14 @@ CREATE TABLE logs (
 	created_at DATETIME,
 	PRIMARY KEY (id),
 )
+
+CREATE TABLE sentiment(
+	id INT,
+    sentiment VARCHAR(256),
+    positive FLOAT,
+    neutral FLOAT,
+    negative FLOAT,
+    tweet_id BIGINT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (tweet_id) REFERENCES tweets(id)
+)

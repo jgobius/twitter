@@ -1,8 +1,12 @@
+from cgitb import text
 from twitter_search.engine import DatabaseEngine
 from twitter_search.search import Authenticator, Twitter
+from sentiment_analyse.model import SentimentAnalysis
+
 from argparse import ArgumentParser
 import pandas as pd
 from datetime import datetime
+import os
 
 class Logging:
 
@@ -59,6 +63,8 @@ parser = ArgumentParser()
 parser.add_argument('-a', '--argument', type=str, help='The query to search tweets. Max 500 characters.')
 parser.add_argument('-t', '--twitter_file', type=str, help='location of .env file for twitter')
 parser.add_argument('-d', '--database_file', type=str, help='location of .env file for the database')
+parser.add_argument('-s', '--sentiment_file', type=str, help='location of .env file Azure Cognitive Services api')
+
 
 if __name__ == '__main__':
 
@@ -68,6 +74,7 @@ if __name__ == '__main__':
 
         auth = Authenticator()
         auth.load(env_file=args.database_file)
+        auth.load(env_file=args.sentiment_file)
 
         database_engine = DatabaseEngine()
 
@@ -77,12 +84,19 @@ if __name__ == '__main__':
                           engine=database_engine, 
                           proxy=False)
 
+        sentiment_analysis = SentimentAnalysis(endpoint=os.environ.get('SENT_ENDPOINT'),
+                                               key=os.environ.get('SENT_KEY'),
+                                               engine=database_engine)
+
         tweets = twitter.search(query=args.argument, filter_on_date=True)
         logging.info(f'Number of tweets: {len(tweets.to_dataframe())}')
 
         if not tweets.to_dataframe().empty:
             twitter.to_sql(tweets)
             logging.info(f'Tweets saved to database')
+
+            sentiment_analysis.analyze(df=tweets.to_dataframe(), text_column='text')
+            logging.info('Sentiment analyzed')
 
     except Exception as e:
 
