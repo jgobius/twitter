@@ -3,8 +3,8 @@ from tweepy.auth import OAuthHandler
 from dotenv import load_dotenv
 import os
 import pandas as pd
-from sqlalchemy import create_engine
 
+from twitter_search.engine import DatabaseEngine
 
 class TweetList:
 
@@ -22,8 +22,8 @@ class TweetList:
 class Twitter:
 
     def __init__(self,
+                 engine:DatabaseEngine,
                  twitter_env_file:str=None,
-                 database_env_file:str=None,
                  proxy:bool=False):
 
         """
@@ -49,10 +49,9 @@ class Twitter:
         """        
 
         auth = Authenticator()
-        auth.load(database_env_file)
         twitter_auth = auth.authenticate(twitter_env_file)
 
-        self.engine = self._create_database_connection()
+        self.engine = engine.engine
 
         if proxy == False:
             self.api = tweepy.API(twitter_auth)
@@ -110,6 +109,13 @@ class Twitter:
 
     def _get_most_recent_id(self) -> int:
 
+        """
+        Method to find the most recent tweet_id in the database.
+
+        Returns:
+            int: the ID that was found.
+        """        
+        
         with self.engine.connect() as conn:
             df = pd.read_sql('SELECT MAX(id) FROM tweets', con=conn)
         
@@ -118,6 +124,13 @@ class Twitter:
             return max_id
 
     def _modify_dataframe(self, df:pd.DataFrame) -> pd.DataFrame:
+
+        """
+        Method to make modifications to the dataframe to make it suitable to append to sql table.
+
+        Returns:
+            pd.DataFrame: the modified dataframe.
+        """        
 
         df['verified'] = df['verified'].map({False: 0, True: 1}).fillna(2)
         df['possibly_sensitive'] = df['possibly_sensitive'].map({False: 0, True: 1}).fillna(2)
@@ -129,21 +142,22 @@ class Twitter:
 
         return df
 
-    def _create_database_connection(self):
-        engine = create_engine(f'mssql+pyodbc://{os.environ.get("USER")}:{os.environ.get("PASSWORD")}@{os.environ.get("SERVER_NAME")}/{os.environ.get("DATABASE_NAME")}?driver={os.environ.get("DRIVER_NAME")}')
-
-        return engine
+    
 
 
 class Authenticator:
 
+    """
+    Class to load dotenv files to environment variables and create Tweepy authenticator object.
+    """    
+    
     def load(self, env_file:str=None) -> None:
 
         if env_file != None:
             load_dotenv(env_file)
 
     def authenticate(self, env_file:str=None) -> OAuthHandler:
-        print(os.getenv('TWITTER_API_KEY'))
+
         self.load(env_file=env_file)
         auth = OAuthHandler(os.getenv('TWITTER_API_KEY'), os.getenv('TWITTER_API_KEY_SECRET'))
         auth.set_access_token(os.getenv('TWITTER_ACCESS_TOKEN'), os.getenv('TWITTER_ACCESS_TOKEN_SECRET'))
@@ -153,6 +167,7 @@ class Authenticator:
 class Tweet:
 
     def __init__(self, result):
+
         self.result = result._json
         self.user = User(self.result.get('user'))
 

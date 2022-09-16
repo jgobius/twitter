@@ -8,3 +8,11 @@ CREATE TABLE tweets (
 	user_name VARCHAR(256),
 	screen_name VARCHAR(256),
 	verified BIT)
+
+CREATE TABLE logs (
+	id INT,
+	log_type VARCHAR(20),
+	log_message VARCHAR(MAX),
+	created_at DATETIME,
+	PRIMARY KEY (id),
+)
