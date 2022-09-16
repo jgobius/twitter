@@ -18,7 +18,6 @@ class TweetList:
 
         return df
 
-
 class Twitter:
 
     def __init__(self,
