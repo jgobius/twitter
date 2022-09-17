@@ -1,6 +1,6 @@
 from cgitb import text
 from twitter_search.engine import DatabaseEngine
-from twitter_search.search import Authenticator, Twitter
+from sentiment_analyzer.search import Authenticator, Twitter
 from sentiment_analyse.model import SentimentAnalysis
 
 from argparse import ArgumentParser
